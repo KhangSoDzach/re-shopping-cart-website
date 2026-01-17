@@ -9,9 +9,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class ReShoppingCartWebAppApplication {
 
 	public static void main(String[] args) {
-		String profile =
-				System.getProperty("spring.profiles.active",
-						System.getenv().getOrDefault("SPRING_PROFILES_ACTIVE", "prod"));
+		String profile = System.getProperty("spring.profiles.active",
+				System.getenv().getOrDefault("SPRING_PROFILES_ACTIVE", "local"));
 
 		applyDotenvToSystemProperties(Dotenv.configure()
 				.directory("./")

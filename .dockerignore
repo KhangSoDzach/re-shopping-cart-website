@@ -1,0 +1,13 @@
+HELP.md
+.gradle
+build/
+!build/libs/*.jar
+out/
+.vscode/
+.idea/
+.env
+.env.*
+.git
+.gitignore
+Dockerfile
+ci-cd.yaml
