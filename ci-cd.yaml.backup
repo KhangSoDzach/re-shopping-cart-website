@@ -37,6 +37,7 @@ jobs:
       with:
         context: .
         push: true
+        # Truy cập Secret trực tiếp ở đây
         tags: ${{ secrets.DOCKER_USERNAME }}/re-shopping-cart-web-app:latest
 
   deploy:
@@ -50,6 +51,7 @@ jobs:
         username: ${{ secrets.EC2_USER }}
         key: ${{ secrets.EC2_SSH_KEY }}
         script: |
+          # Dùng tên đăng nhập trực tiếp để pull image
           docker pull ${{ secrets.DOCKER_USERNAME }}/re-shopping-cart-web-app:latest
           docker stop ${{ env.CONTAINER_NAME }} || true
           docker rm ${{ env.CONTAINER_NAME }} || true
