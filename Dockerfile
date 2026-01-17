@@ -1,30 +1,30 @@
-# Stage 1: Build
-FROM eclipse-temurin:21-jdk-alpine AS builder
+# Build stage
+FROM gradle:8.5-jdk21 AS build
 WORKDIR /app
 
-# Copy gradle files first for caching
-COPY gradle/ gradle/
-COPY gradlew build.gradle settings.gradle ./
+# Copy gradle files first for better caching
+COPY build.gradle settings.gradle ./
+COPY gradle gradle
+
+# Download dependencies (this layer will be cached)
+RUN gradle dependencies --no-daemon || true
 
 # Copy source code
-COPY src/ src/
+COPY src src
 
-# Build the application (skipping tests for speed in build stage)
-RUN ./gradlew bootJar -x test --no-daemon
+# Build the application
+RUN gradle build -x test --no-daemon
 
-# Stage 2: Run
-FROM eclipse-temurin:21-jre-alpine
+# Run stage
+FROM openjdk:21-jdk-slim
 WORKDIR /app
 
-# Create a non-root user for security
-RUN addgroup -S spring && adduser -S spring -G spring
-USER spring:spring
+# Copy the built JAR from build stage
+COPY --from=build /app/build/libs/*.jar app.jar
 
-# Copy JAR from builder stage
-COPY --from=builder /app/build/libs/*.jar app.jar
-
-# Expose the application port
+# Expose port
 EXPOSE 8080
 
-# Environment variables handled at runtime
+# Run the application
 ENTRYPOINT ["java", "-jar", "app.jar"]
+

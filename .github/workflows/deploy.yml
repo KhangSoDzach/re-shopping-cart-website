@@ -1,0 +1,64 @@
+name: Deploy Shopping Cart to Azure
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch: # Allows manual trigger from GitHub UI
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Login to Docker Hub
+        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+      - name: Build and Push Docker Image
+        run: |
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/shopping-cart:latest .
+          docker push ${{ secrets.DOCKER_USERNAME }}/shopping-cart:latest
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: SSH and Deploy to Azure VM
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.AZURE_VM_IP }}
+          username: ${{ secrets.AZURE_VM_USER }}
+          key: ${{ secrets.AZURE_SSH_KEY }}
+          script: |
+            # Create Docker network if it doesn't exist
+            docker network create app-network || true
+            
+            # Run MySQL Container (only if not already running)
+            docker run -d --name mysql-db \
+              --network app-network \
+              -e MYSQL_ROOT_PASSWORD=${{ secrets.DB_PASSWORD }} \
+              -e MYSQL_DATABASE=shopping_cart \
+              -p 3306:3306 \
+              mysql:8.0 || true
+
+            # Stop and remove old application container
+            docker stop shopping-app || true
+            docker rm shopping-app || true
+            
+            # Pull latest image
+            docker pull ${{ secrets.DOCKER_USERNAME }}/shopping-cart:latest
+
+            # Run new application container
+            docker run -d --name shopping-app \
+              --network app-network \
+              -p 8080:8080 \
+              -e DB_HOST=mysql-db \
+              -e DB_NAME=shopping_cart \
+              -e DB_USER=root \
+              -e DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
+              -e SPRING_JPA_HIBERNATE_DDL_AUTO=update \
+              ${{ secrets.DOCKER_USERNAME }}/shopping-cart:latest
+            
+            # Clean up old images to save space
+            docker image prune -af || true
