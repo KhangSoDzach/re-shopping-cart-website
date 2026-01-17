@@ -16,7 +16,7 @@ COPY src src
 RUN gradle build -x test --no-daemon
 
 # Run stage
-FROM openjdk:21-jdk-slim
+FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 
 # Copy the built JAR from build stage
