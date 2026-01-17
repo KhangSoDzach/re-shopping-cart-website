@@ -14,14 +14,20 @@ spring:
     password: ${SPRING_DATASOURCE_PASSWORD:}
     driver-class-name: com.mysql.cj.jdbc.Driver
 
+  sql:
+    init:
+      mode: ${SPRING_SQL_INIT_MODE:always}
+      continue-on-error: true
+
   jpa:
     database-platform: org.hibernate.dialect.MySQLDialect
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQLDialect
     hibernate:
-      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:none}
+      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:update}
     show-sql: ${SPRING_JPA_SHOW_SQL:false}
+    defer-datasource-initialization: true
 
   thymeleaf:
     cache: ${SPRING_THYMELEAF_CACHE:false}
