@@ -55,18 +55,18 @@ jobs:
             docker rm shopping-app || true
             
             # Pull latest image
-            docker pull ${{ secrets.DOCKER_USERNAME }}/shopping-cart:latest
+            docker pull "${{ secrets.DOCKER_USERNAME }}/shopping-cart:latest"
 
             # Run new application container
             docker run -d --name shopping-app \
               --network app-network \
               -p 8080:8080 \
-              -e DB_HOST=mysql-db \
-              -e DB_NAME=shopping_cart \
-              -e DB_USER=root \
-              -e DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
+              -e SPRING_PROFILES_ACTIVE=prod \
+              -e SPRING_DATASOURCE_URL=jdbc:mysql://mysql-db:3306/shopping_cart?createDatabaseIfNotExist=true \
+              -e SPRING_DATASOURCE_USERNAME=root \
+              -e SPRING_DATASOURCE_PASSWORD='${{ secrets.DB_PASSWORD }}' \
               -e SPRING_JPA_HIBERNATE_DDL_AUTO=update \
-              ${{ secrets.DOCKER_USERNAME }}/shopping-cart:latest
+              "${{ secrets.DOCKER_USERNAME }}/shopping-cart:latest"
             
             # Clean up old images to save space
             docker image prune -af || true
